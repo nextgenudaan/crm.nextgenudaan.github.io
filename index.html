@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen Udaan MLM CRM</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://unpkg.com/feather-icons/dist/feather.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>NextGen Udaan</h1>
+                <p>MLM CRM</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full-width">Login</button>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app-container hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i data-feather="menu"></i>
+                </button>
+                <h2 class="page-title">Dashboard</h2>
+            </div>
+            <div class="header-right">
+
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <i data-feather="user"></i>
+                    </div>
+                    <span class="user-name">Loading...</span>
+                </div>
+                <button id="logout-btn" class="btn btn--secondary btn--sm">
+                    <i data-feather="log-out"></i>
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-logo">
+                <h3>NextGen Udaan</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <i data-feather="home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="prospects">
+                    <i data-feather="users"></i>
+                    <span>Prospects</span>
+                </a>
+                <a href="#" class="nav-item" data-page="add-prospect">
+                    <i data-feather="user-plus"></i>
+                    <span>Add Prospect</span>
+                </a>
+                <a href="#" class="nav-item" data-page="analytics">
+                    <i data-feather="bar-chart-2"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="nav-item" data-page="data-management">
+                    <i data-feather="database"></i>
+                    <span>Data Management</span>
+                </a>
+                <a href="#" class="nav-item" data-page="lead-management">
+                    <i data-feather="target"></i>
+                    <span>Lead Management</span>
+                </a>
+                <a href="#" class="nav-item" data-page="whatsapp">
+                    <i data-feather="message-circle"></i>
+                    <span>WhatsApp</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: var(--color-bg-1);">
+                            <i data-feather="users" style="color: #2563eb;"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="total-prospects">85</h3>
+                            <p>Total Prospects</p>
+                            <span class="metric-change positive">+8.3%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: var(--color-bg-3);">
+                            <i data-feather="trending-up" style="color: #16a34a;"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="interested-prospects">18</h3>
+                            <p>Interested Prospects</p>
+                            <span class="metric-change positive">+21.2%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: var(--color-bg-2);">
+                            <i data-feather="user-check" style="color: #ca8a04;"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="joined-members">12</h3>
+                            <p>Joined Members</p>
+                            <span class="metric-change positive">+14.1%</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background: var(--color-bg-5);">
+                            <i data-feather="activity" style="color: #9333ea;"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="active-members">4</h3>
+                            <p>Active Team Members</p>
+                            <span class="metric-change positive">+0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-row">
+                        <div class="chart-container" style="height: 400px; position: relative;">
+                            <h3>Prospect Status Distribution</h3>
+                            <canvas id="status-chart"></canvas>
+                        </div>
+                        <div class="chart-container" style="height: 400px; position: relative;">
+                            <h3>Lead Source Performance</h3>
+                            <canvas id="source-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 400px; position: relative;">
+                        <h3>Growth Over Time</h3>
+                        <canvas id="growth-chart"></canvas>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Prospects Page -->
+            <div id="prospects-page" class="page">
+                <div class="page-header">
+                    <div class="view-toggle">
+                        <h2 style="margin: 0;">Prospects List</h2>
+                    </div>
+                    <div class="search-filters">
+                        <input type="text" id="prospect-search" class="form-control" placeholder="Search prospects...">
+                        <select id="status-filter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="follow-up">Follow-up</option>
+                            <option value="interested">Interested</option>
+                            <option value="joined">Joined</option>
+                            <option value="lost">Lost</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- List View -->
+                <div id="list-view" class="prospects-list">
+                    <div class="table-container">
+                        <table class="prospects-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Lead Source</th>
+                                    <th>Assigned To</th>
+                                    <th>Follow-up Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prospects-tbody">
+                                <!-- Prospects will be populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Prospect Page -->
+            <div id="add-prospect-page" class="page">
+                <div class="creation-container">
+                    <div class="creation-header">
+                        <div class="header-icon">
+                            <i data-feather="user-plus"></i>
+                        </div>
+                        <div class="header-text">
+                            <h2>New Prospect</h2>
+                            <p>Capture details for a potential new team member</p>
+                        </div>
+                    </div>
+
+                    <form id="add-prospect-form" class="premium-form">
+                        <div class="form-grid">
+                            <!-- Section: Personal Information -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <i data-feather="user"></i>
+                                    <span>Personal Information</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name *</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" name="name" class="form-control"
+                                                placeholder="e.g. John Doe" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Phone *</label>
+                                        <div class="input-wrapper">
+                                            <input type="tel" name="phone" class="form-control"
+                                                placeholder="+91 00000 00000" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Email Address</label>
+                                        <div class="input-wrapper">
+                                            <input type="email" name="email" class="form-control"
+                                                placeholder="john@example.com">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Age</label>
+                                        <div class="input-wrapper">
+                                            <input type="number" name="age" class="form-control" min="18" max="80"
+                                                placeholder="25">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Occupation</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" name="occupation" class="form-control"
+                                                placeholder="e.g. Software Engineer">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Instagram Handle</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" name="instagram" class="form-control"
+                                                placeholder="@username">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Prospect Details -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <i data-feather="target"></i>
+                                    <span>Prospect Details</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Interest Level</label>
+                                        <select name="interestLevel" class="form-control">
+                                            <option value="high">🔥 High Interest</option>
+                                            <option value="medium">⚡ Medium Interest</option>
+                                            <option value="low">❄️ Low Interest</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Lead Source</label>
+                                        <select name="leadSource" class="form-control">
+                                            <option value="Instagram">Instagram</option>
+                                            <option value="WhatsApp">WhatsApp</option>
+                                            <option value="Referral">Referral</option>
+                                            <option value="Event">Event</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Location</label>
+                                        <div class="input-wrapper">
+                                            <input type="text" name="location" class="form-control"
+                                                placeholder="City, State">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Follow-up Date</label>
+                                        <div class="input-wrapper">
+                                            <input type="date" name="followUpDate" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Assign to Team Member</label>
+                                    <input type="text" name="assignedTo" id="assign-to-input" class="form-control"
+                                        list="assign-to-list" placeholder="Search by name or ID...">
+                                    <datalist id="assign-to-list">
+                                        <!-- Options populated by JS -->
+                                    </datalist>
+                                    <input type="hidden" id="assign-to-value" name="assignedToId">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Initial Notes</label>
+                                    <textarea name="notes" class="form-control" rows="4"
+                                        placeholder="Add any initial observations or context..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-footer">
+                            <button type="button" class="btn btn--secondary" id="clear-form">
+                                <i data-feather="refresh-cw"></i>
+                                Clear Form
+                            </button>
+                            <button type="submit" class="btn btn--primary">
+                                <i data-feather="user-plus"></i>
+                                Create Prospect Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics-page" class="page">
+                <div class="analytics-grid">
+                    <div class="chart-container" style="height: 400px; position: relative;">
+                        <h3>Conversion Funnel</h3>
+                        <canvas id="funnel-chart"></canvas>
+                    </div>
+                    <div class="leaderboard-section">
+                        <h3>Team Performance Leaderboard</h3>
+                        <div id="leaderboard-list" class="leaderboard-list">
+                            <!-- Leaderboard items populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="performance-cards">
+                    <div class="performance-card">
+                        <h4>Conversion Rate</h4>
+                        <div class="performance-value" id="analytics-conversion-rate">0%</div>
+
+                    </div>
+                    <div class="performance-card">
+                        <h4>Active Prospects</h4>
+                        <div class="performance-value" id="analytics-active-prospects">0</div>
+                    </div>
+                    <div class="performance-card">
+                        <h4>Success Rate</h4>
+                        <div class="performance-value" id="analytics-success-rate">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management Page -->
+            <div id="data-management-page" class="page">
+                <div class="page-header">
+                    <h2>Data Management</h2>
+                </div>
+
+                <div class="data-management-container">
+                    <!-- Reports Section -->
+                    <div class="data-section">
+                        <h3><i data-feather="file-text"></i> CRM Reports</h3>
+                        <div class="reports-grid">
+                            <div class="report-item" onclick="app.generateReport('prospects')">
+                                <i data-feather="users" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>All Prospects Report</h4>
+                                    <p>Complete list of prospects with status and details</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                            <div class="report-item" onclick="app.generateReport('prospects_status')">
+                                <i data-feather="pie-chart" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>Status Analysis</h4>
+                                    <p>Breakdown of prospects by current status</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                            <div class="report-item" onclick="app.generateReport('prospects_source')">
+                                <i data-feather="share-2" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>Lead Source Report</h4>
+                                    <p>Analysis of where leads are coming from</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                            <div class="report-item" onclick="app.generateReport('leads')">
+                                <i data-feather="target" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>Leads Report</h4>
+                                    <p>Export of all raw leads data</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                            <div class="report-item" onclick="app.generateReport('employee_performance')">
+                                <i data-feather="bar-chart" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>Employee Performance</h4>
+                                    <p>Conversions and lead handling mainly</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                            <div class="report-item" onclick="app.generateReport('activities')">
+                                <i data-feather="activity" class="report-icon"></i>
+                                <div class="report-info">
+                                    <h4>Activity Log</h4>
+                                    <p>Recent system activities and updates</p>
+                                </div>
+                                <i data-feather="download" class="download-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Operations Section -->
+                    <div class="data-section mt-4">
+                        <h3><i data-feather="database"></i> Data Operations</h3>
+                        <div class="operations-grid">
+                            <div class="operation-card">
+                                <h4>Backup & Restore</h4>
+                                <p>Manage your data snapshots</p>
+                                <div class="btn-group">
+                                    <button id="create-backup" class="btn btn--primary btn--sm">
+                                        <i data-feather="save"></i> Create Backup
+                                    </button>
+                                    <button id="restore-backup" class="btn btn--secondary btn--sm">
+                                        <i data-feather="rotate-ccw"></i> Restore
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="operation-card">
+                                <h4>Data Migration</h4>
+                                <p>Import or export system data</p>
+                                <div class="btn-group">
+                                    <button id="export-json" class="btn btn--secondary btn--sm">
+                                        <i data-feather="upload"></i> Export JSON
+                                    </button>
+                                    <button id="import-btn" class="btn btn--secondary btn--sm">
+                                        <i data-feather="download"></i> Import Data
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="operation-card danger-zone">
+                                <h4>Danger Zone</h4>
+                                <p>Irreversible actions</p>
+                                <button id="clear-all-data" class="btn btn--error btn--sm">
+                                    <i data-feather="trash-2"></i> Clear All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Edit Prospect Modal -->
+            <div id="edit-prospect-modal" class="modal hidden">
+                <div class="modal-content modal-content--lg">
+                    <div class="modal-header">
+                        <div class="header-icon">
+                            <i data-feather="edit"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>Edit Prospect</h3>
+                            <p>Update information for this prospect</p>
+                        </div>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <form id="edit-prospect-form" class="modal-body premium-form">
+                        <input type="hidden" name="prospect-id">
+                        <div class="form-grid">
+                            <!-- Section: Personal Information -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <i data-feather="user"></i>
+                                    <span>Personal Information</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name *</label>
+                                        <input type="text" name="name" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Phone *</label>
+                                        <input type="tel" name="phone" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" name="email" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Age</label>
+                                        <input type="number" name="age" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Occupation</label>
+                                        <input type="text" name="occupation" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Instagram</label>
+                                        <input type="text" name="instagram" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Prospect Details -->
+                            <div class="form-section">
+                                <div class="section-header">
+                                    <i data-feather="target"></i>
+                                    <span>Status & Assignment</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Current Status</label>
+                                        <select name="status" class="form-control">
+                                            <option value="new">New</option>
+                                            <option value="contacted">Contacted</option>
+                                            <option value="follow-up">Follow-up</option>
+                                            <option value="interested">Interested</option>
+                                            <option value="joined">Joined</option>
+                                            <option value="lost">Lost</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Interest Level</label>
+                                        <select name="interestLevel" class="form-control">
+                                            <option value="high">🔥 High</option>
+                                            <option value="medium">⚡ Medium</option>
+                                            <option value="low">❄️ Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Lead Source</label>
+                                        <select name="leadSource" class="form-control">
+                                            <option value="Instagram">Instagram</option>
+                                            <option value="WhatsApp">WhatsApp</option>
+                                            <option value="Referral">Referral</option>
+                                            <option value="Event">Event</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Assigned To</label>
+                                        <input type="text" name="assignedTo" id="edit-assign-to-input"
+                                            class="form-control" list="edit-assign-to-list"
+                                            placeholder="Search by name or ID...">
+                                        <datalist id="edit-assign-to-list">
+                                            <!-- Options populated by JS -->
+                                        </datalist>
+                                        <input type="hidden" id="edit-assign-to-value" name="assignedToId">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Location</label>
+                                        <input type="text" name="location" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Follow-up Date</label>
+                                        <input type="date" name="followUpDate" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn--secondary modal-close">Cancel</button>
+                            <button type="submit" class="btn btn--primary">
+                                <i data-feather="check"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
+            <!-- Lead Management Page -->
+            <div id="lead-management-page" class="page">
+                <div class="page-header">
+                    <h2>Lead Management</h2>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <i data-feather="search"></i>
+                            <input type="text" id="lead-search" placeholder="Search leads..." class="form-control">
+                        </div>
+                        <button id="delete-selected-leads" class="btn btn--error btn--sm">
+                            <i data-feather="trash-2"></i> Delete Selected
+                        </button>
+                        <button id="export-leads-btn" class="btn btn--success btn--sm">
+                            <i data-feather="download"></i> Export
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="prospects-table" id="leads-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all-leads"></th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-tbody">
+                            <!-- Leads populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- WhatsApp Page -->
+            <div id="whatsapp-page" class="page">
+                <div class="page-header">
+                    <h2>WhatsApp Messaging</h2>
+                    <div class="header-actions">
+                        <button id="create-template-btn" class="btn btn--primary">
+                            <i data-feather="plus"></i> Create Template
+                        </button>
+                    </div>
+                </div>
+
+                <div class="whatsapp-container">
+                    <!-- Template List Section -->
+                    <div class="whatsapp-section" id="template-list-section">
+                        <div class="section-header">
+                            <h3><i data-feather="file-text"></i> Message Templates</h3>
+                            <div class="filter-group">
+                                <select id="template-type-filter" class="form-control">
+                                    <option value="all">All Types</option>
+                                    <option value="welcome">Welcome</option>
+                                    <option value="follow-up">Follow-up</option>
+                                    <option value="promotional">Promotional</option>
+                                    <option value="reminder">Reminder</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="templates-grid" class="templates-grid">
+                            <!-- Templates will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Template Form Section (Hidden by default) -->
+                    <div class="whatsapp-section hidden" id="template-form-section">
+                        <div class="section-header">
+                            <h3 id="template-form-title"><i data-feather="edit-3"></i> Create Template</h3>
+                            <button class="btn btn--secondary btn--sm" id="cancel-template-edit">Cancel</button>
+                        </div>
+                        <form id="whatsapp-template-form" class="premium-form" accept-charset="UTF-8">
+                            <input type="hidden" id="template-id">
+
+                            <div class="template-editor-grid">
+                                <!-- Left Column: Editor -->
+                                <div class="editor-column">
+                                    <div class="form-group">
+                                        <label class="form-label">Template Name *</label>
+                                        <input type="text" id="template-name" class="form-control"
+                                            placeholder="e.g. First Contact Welcome" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Template Type</label>
+                                        <select id="template-type" class="form-control">
+                                            <option value="welcome">Welcome</option>
+                                            <option value="follow-up">Follow-up</option>
+                                            <option value="promotional">Promotional</option>
+                                            <option value="reminder">Reminder</option>
+                                            <option value="custom">Custom</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Message Content *</label>
+                                        <div class="editor-tools">
+                                            <div class="variable-helper">
+                                                <span>Insert Variable:</span>
+                                                <div class="variable-buttons">
+                                                    <button type="button" class="btn-variable"
+                                                        data-var="name">Name</button>
+                                                    <button type="button" class="btn-variable"
+                                                        data-var="phone">Phone</button>
+                                                    <button type="button" class="btn-variable"
+                                                        data-var="email">Email</button>
+                                                    <button type="button" class="btn-variable"
+                                                        data-var="location">City</button>
+                                                </div>
+                                            </div>
+                                            <div class="emoji-toolbar">
+                                                <button type="button" class="btn-emoji" title="Thumbs Up">👍</button>
+                                                <button type="button" class="btn-emoji" title="Heart">❤️</button>
+                                                <button type="button" class="btn-emoji" title="Green Heart">💚</button>
+                                                <button type="button" class="btn-emoji" title="Fire">🔥</button>
+                                                <button type="button" class="btn-emoji" title="Sparkles">✨</button>
+                                                <button type="button" class="btn-emoji" title="Handshake">🤝</button>
+                                                <button type="button" class="btn-emoji" title="Smile">😊</button>
+                                                <button type="button" class="btn-emoji" title="Calendar">📅</button>
+                                                <button type="button" class="btn-emoji" title="Check Mark">✅</button>
+                                                <button type="button" class="btn-emoji" title="Rocket">🚀</button>
+                                            </div>
+                                        </div>
+                                        <textarea id="template-content" class="form-control" rows="12"
+                                            placeholder="Enter your message here. Use {{name}} for dynamic values..."
+                                            required></textarea>
+                                    </div>
+                                    <div class="form-footer">
+                                        <button type="submit" class="btn btn--primary">Save Template</button>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Live Preview -->
+                                <div class="preview-column">
+                                    <div class="phone-preview-container">
+                                        <div class="phone-frame">
+                                            <div class="phone-notch"></div>
+                                            <div class="phone-screen">
+                                                <div class="whatsapp-header">
+                                                    <div class="wa-header-left">
+                                                        <i data-feather="arrow-left" class="wa-back-icon"></i>
+                                                        <div class="wa-avatar">
+                                                            <img src="https://ui-avatars.com/api/?name=NU&background=128C7E&color=fff"
+                                                                alt="Avatar">
+                                                        </div>
+                                                        <div class="wa-info">
+                                                            <span class="wa-name">NextGen Udaan</span>
+                                                            <span class="wa-status">Business Account</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="wa-header-right">
+                                                        <i data-feather="video"></i>
+                                                        <i data-feather="phone"></i>
+                                                        <i data-feather="more-vertical"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="whatsapp-chat-area">
+                                                    <div class="wa-date-divider"><span>Today</span></div>
+                                                    <div class="wa-message-bubble sent">
+                                                        <div class="wa-message-text" id="live-preview-content">
+                                                            Start typing seeing your message preview here...
+                                                        </div>
+                                                        <div class="wa-message-meta">
+                                                            <span class="wa-time">10:30 AM</span>
+                                                            <span class="wa-checks">
+                                                                <svg viewBox="0 0 16 15" width="16" height="15"
+                                                                    class="">
+                                                                    <path fill="currentColor"
+                                                                        d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.473-.018l5.358-7.717a.42.42 0 0 0-.117-.541zM6.96 5.378l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.473-.018l.849-1.222a.417.417 0 0 0-.05-.53l-.907-.818a.332.332 0 0 0-.472-.033l-.872.331zM3.808 6.554l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.033L1.891 7.769a.329.329 0 0 0-.487.032L1.045 8.24a.428.428 0 0 0 .033.58l2.915 2.505c.182.162.457.142.585-.042l2.365-3.416a.42.42 0 0 0-.117-.541l-.478-.372a.365.365 0 0 0-.51.063l-1.037 1.492a.32.32 0 0 1-.484.034l-.435-.531z">
+                                                                    </path>
+                                                                </svg>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="whatsapp-footer-fake">
+                                                    <i data-feather="plus"></i>
+                                                    <div class="fake-input"></div>
+                                                    <i data-feather="mic"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Prospect Selection Section (Hidden by default) -->
+                    <div class="whatsapp-section hidden" id="send-messaging-section">
+                        <div class="section-header">
+                            <button class="btn btn--secondary btn--sm" id="back-to-templates">
+                                <i data-feather="arrow-left"></i> Back to Templates
+                            </button>
+                            <h3><i data-feather="send"></i> Send Message: <span id="selected-template-name">Template
+                                    Name</span></h3>
+                        </div>
+
+                        <div class="messaging-grid">
+                            <div class="prospect-selector-container">
+                                <div class="selector-header">
+                                    <h4>Select Prospects</h4>
+                                    <div id="selection-stats">0 selected</div>
+                                </div>
+                                <div class="selector-controls">
+                                    <!-- Channel Toggle -->
+                                    <div class="channel-toggle-wrapper">
+                                        <div class="channel-toggle-group">
+                                            <button type="button" class="channel-btn active" data-channel="whatsapp">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="feather feather-message-circle">
+                                                    <path
+                                                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                                    </path>
+                                                </svg>
+                                                WhatsApp
+                                            </button>
+                                            <button type="button" class="channel-btn" data-channel="instagram">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="feather feather-instagram">
+                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5">
+                                                    </rect>
+                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z">
+                                                    </path>
+                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                                </svg>
+                                                Instagram
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <input type="text" id="prospect-selection-search" class="form-control"
+                                        placeholder="Search by name, phone or Instagram...">
+                                    <div class="selector-filters">
+                                        <select id="prospect-status-filter" class="form-control">
+                                            <option value="">All Status</option>
+                                            <option value="new">New</option>
+                                            <option value="contacted">Contacted</option>
+                                            <option value="follow-up">Follow-up</option>
+                                            <option value="interested">Interested</option>
+                                            <option value="joined">Joined</option>
+                                            <option value="lost">Lost</option>
+                                        </select>
+                                        <select id="prospect-interest-filter" class="form-control">
+                                            <option value="">All Interest</option>
+                                            <option value="high">🔥 High</option>
+                                            <option value="medium">⚡ Medium</option>
+                                            <option value="low">❄️ Low</option>
+                                        </select>
+                                    </div>
+                                    <div class="selection-actions">
+                                        <button id="select-all-prospects" class="btn btn--secondary btn--xs">Select
+                                            All</button>
+                                        <button id="deselect-all-prospects" class="btn btn--secondary btn--xs">Deselect
+                                            All</button>
+                                    </div>
+                                </div>
+                                <div id="prospect-selection-list" class="prospect-selection-list">
+                                    <!-- Prospect checklist populated by JS -->
+                                </div>
+                            </div>
+
+                            <div class="message-preview-container">
+                                <h4>Message Preview</h4>
+                                <div id="message-preview-content" class="message-preview-content">
+                                    <p class="text-muted">Select a prospect to see preview</p>
+                                </div>
+                                <div class="send-actions mt-4">
+                                    <button id="send-bulk-btn" class="btn btn--success btn--full-width">
+                                        <i data-feather="send"></i> Send to <span id="bulk-send-count">0</span>
+                                        Prospects
+                                    </button>
+                                    <p class="send-note"><i data-feather="info"></i> This will open WhatsApp &
+                                        Instagram
+                                        for each message.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Prospect Detail Modal -->
+    <div id="prospect-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Prospect Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="prospect-details">
+                    <!-- Prospect details populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyACCpl5f7g34Fs0eMxUguBuGE80SuKZCIA",
+            authDomain: "hrms-326ad.firebaseapp.com",
+            projectId: "hrms-326ad",
+            storageBucket: "hrms-326ad.firebasestorage.app",
+            messagingSenderId: "813107687048",
+            appId: "1:813107687048:web:2d3c2fff54a65285ba793d",
+            measurementId: "G-HXGFCBV64Q"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
