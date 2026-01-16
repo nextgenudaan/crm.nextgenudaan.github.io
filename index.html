@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextGen Udaan MLM CRM</title>
+    <title>NextGen Udaan CRM</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://unpkg.com/feather-icons/dist/feather.css" rel="stylesheet">
@@ -13,23 +13,96 @@
 <body>
     <!-- Login Page -->
     <div id="login-page" class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <h1>NextGen Udaan</h1>
-                <p>MLM CRM</p>
-            </div>
-            <form id="login-form" class="login-form">
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" id="email" class="form-control" required>
+        <!-- Left Side: Brand & Visual -->
+        <div class="login-visual">
+            <div class="login-visual-content">
+                <div class="brand-section">
+                    <div class="brand-logo">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="48" height="48" rx="12" fill="url(#gradient-logo)" />
+                            <path d="M24 12L32 20L24 28L16 20L24 12Z" fill="white" opacity="0.9" />
+                            <path d="M24 20L32 28L24 36L16 28L24 20Z" fill="white" opacity="0.6" />
+                            <defs>
+                                <linearGradient id="gradient-logo" x1="0" y1="0" x2="48" y2="48">
+                                    <stop offset="0%" style="stop-color:#32B8C6" />
+                                    <stop offset="100%" style="stop-color:#1A6873" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <h1 class="brand-title">NextGen Udaan</h1>
+                    <p class="brand-subtitle">Modern CRM Platform</p>
                 </div>
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn--primary btn--full-width">Login</button>
-            </form>
 
+                <div class="visual-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i data-feather="users"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>Prospect Management</h3>
+                            <p>Track and nurture your leads efficiently</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i data-feather="trending-up"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>Analytics Dashboard</h3>
+                            <p>Real-time insights and performance metrics</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i data-feather="message-circle"></i>
+                        </div>
+                        <div class="feature-text">
+                            <h3>WhatsApp Integration</h3>
+                            <p>Streamline communication workflows</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="login-form-container">
+            <div class="login-form-wrapper">
+                <div class="login-form-header">
+                    <h2>Welcome back</h2>
+                    <p>Enter your credentials to access your account</p>
+                </div>
+
+                <form id="login-form" class="modern-login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-with-icon">
+                            <i data-feather="mail" class="input-icon"></i>
+                            <input type="email" id="email" class="form-control modern-input"
+                                placeholder="you@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-with-icon">
+                            <i data-feather="lock" class="input-icon"></i>
+                            <input type="password" id="password" class="form-control modern-input"
+                                placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary btn--full-width modern-btn">
+                        <span>Sign in</span>
+                        <i data-feather="arrow-right" class="btn-icon"></i>
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <p class="powered-by">Powered by NextGen Udaan Platform</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -105,9 +178,9 @@
                             <i data-feather="users" style="color: #2563eb;"></i>
                         </div>
                         <div class="metric-content">
-                            <h3 id="total-prospects">85</h3>
+                            <h3 id="total-prospects">0</h3>
                             <p>Total Prospects</p>
-                            <span class="metric-change positive">+8.3%</span>
+                            <span id="prospects-growth" class="metric-change">0%</span>
                         </div>
                     </div>
                     <div class="metric-card">
@@ -115,9 +188,9 @@
                             <i data-feather="trending-up" style="color: #16a34a;"></i>
                         </div>
                         <div class="metric-content">
-                            <h3 id="interested-prospects">18</h3>
+                            <h3 id="interested-prospects">0</h3>
                             <p>Interested Prospects</p>
-                            <span class="metric-change positive">+21.2%</span>
+                            <span id="interested-growth" class="metric-change">0%</span>
                         </div>
                     </div>
                     <div class="metric-card">
@@ -125,9 +198,9 @@
                             <i data-feather="user-check" style="color: #ca8a04;"></i>
                         </div>
                         <div class="metric-content">
-                            <h3 id="joined-members">12</h3>
+                            <h3 id="joined-members">0</h3>
                             <p>Joined Members</p>
-                            <span class="metric-change positive">+14.1%</span>
+                            <span id="joined-growth" class="metric-change">0%</span>
                         </div>
                     </div>
                     <div class="metric-card">
@@ -135,9 +208,9 @@
                             <i data-feather="activity" style="color: #9333ea;"></i>
                         </div>
                         <div class="metric-content">
-                            <h3 id="active-members">4</h3>
+                            <h3 id="active-members">0</h3>
                             <p>Active Team Members</p>
-                            <span class="metric-change positive">+0%</span>
+                            <span id="active-growth" class="metric-change">0%</span>
                         </div>
                     </div>
                 </div>
@@ -834,17 +907,12 @@
                                                 WhatsApp
                                             </button>
                                             <button type="button" class="channel-btn" data-channel="instagram">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="feather feather-instagram">
-                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5">
-                                                    </rect>
-                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z">
-                                                    </path>
-                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                                                </svg>
+                                                <i data-feather="instagram"></i>
                                                 Instagram
+                                            </button>
+                                            <button type="button" class="channel-btn" data-channel="email">
+                                                <i data-feather="mail"></i>
+                                                Email
                                             </button>
                                         </div>
                                     </div>

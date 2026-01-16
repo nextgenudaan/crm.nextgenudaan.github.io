@@ -220,7 +220,6 @@ class NextGenUdaanApp {
         this.db.collection('activities').orderBy('timestamp', 'desc').limit(20)
             .onSnapshot(snapshot => {
                 this.data.activities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (this.currentPage === 'dashboard') this.loadActivityFeed();
             });
 
         // Listen for users
@@ -474,6 +473,11 @@ class NextGenUdaanApp {
         const joinedMembers = this.data.prospects.filter(p => p.status === 'joined').length;
         const activeMembers = this.data.users.filter(u => u.status === 'active').length;
 
+        // Calculate growth metrics
+        const totalProspectsGrowth = this.calculateGrowth(this.data.prospects);
+        const interestedGrowth = this.calculateGrowth(this.data.prospects.filter(p => ['interested', 'hot'].includes(p.interestLevel) || p.status === 'contacted'));
+        const joinedGrowth = this.calculateGrowth(this.data.prospects.filter(p => p.status === 'joined'));
+
         const elements = {
             'total-prospects': totalProspects,
             'interested-prospects': interestedProspects,
@@ -481,10 +485,16 @@ class NextGenUdaanApp {
             'active-members': activeMembers
         };
 
+        const growthElements = {
+            'prospects-growth': totalProspectsGrowth,
+            'interested-growth': interestedGrowth,
+            'joined-growth': joinedGrowth
+        };
+
+        // Update counts
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
             if (element) {
-                // Animate value if it changed
                 const currentValue = parseInt(element.textContent) || 0;
                 if (currentValue !== value) {
                     this.animateValue(element, currentValue, value, 500);
@@ -493,6 +503,58 @@ class NextGenUdaanApp {
                 }
             }
         });
+
+        // Update growth labels
+        Object.entries(growthElements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                const formattedValue = (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+                element.textContent = formattedValue;
+                element.classList.remove('positive', 'negative');
+                if (value > 0) {
+                    element.classList.add('positive');
+                } else if (value < 0) {
+                    element.classList.add('negative');
+                }
+            }
+        });
+    }
+
+    calculateGrowth(items) {
+        if (!items || items.length === 0) return 0;
+
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        let currentMonthCount = 0;
+        let lastMonthCount = 0;
+
+        items.forEach(item => {
+            let date;
+            if (item.createdAt && typeof item.createdAt.toDate === 'function') {
+                date = item.createdAt.toDate();
+            } else if (item.createdAt) {
+                date = new Date(item.createdAt);
+            } else {
+                return;
+            }
+
+            if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                currentMonthCount++;
+            } else if (date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear) {
+                lastMonthCount++;
+            }
+        });
+
+        if (lastMonthCount === 0) {
+            return currentMonthCount > 0 ? 100 : 0;
+        }
+
+        return ((currentMonthCount - lastMonthCount) / lastMonthCount) * 100;
     }
 
     animateValue(obj, start, end, duration) {
@@ -1348,19 +1410,19 @@ class NextGenUdaanApp {
                 </div>
                 <div class="profile-field">
                     <label>Email:</label>
-                    <span>${prospect.email || 'N/A'}</span>
+                    <span id="view-email">${prospect.email || 'N/A'}</span>
                 </div>
                 <div class="profile-field">
                     <label>Age:</label>
-                    <span>${prospect.age || 'N/A'}</span>
+                    <span id="view-age">${prospect.age || 'N/A'}</span>
                 </div>
                 <div class="profile-field">
                     <label>Occupation:</label>
-                    <span>${prospect.occupation || 'N/A'}</span>
+                    <span id="view-occupation">${prospect.occupation || 'N/A'}</span>
                 </div>
                 <div class="profile-field">
                     <label>Instagram:</label>
-                    <span>${prospect.instagram || 'N/A'}</span>
+                    <span id="view-instagram">${prospect.instagram || 'N/A'}</span>
                 </div>
                 <div class="profile-field">
                     <label>Interest Level:</label>
@@ -2110,9 +2172,13 @@ class NextGenUdaanApp {
                 // Update Button Text
                 const sendBtn = document.getElementById('send-bulk-btn');
                 if (sendBtn) {
-                    sendBtn.innerHTML = this.currentChannel === 'whatsapp'
-                        ? '<i data-feather="send"></i> Send WhatsApp'
-                        : '<i data-feather="instagram"></i> Send via Instagram';
+                    if (this.currentChannel === 'whatsapp') {
+                        sendBtn.innerHTML = '<i data-feather="message-circle"></i> Send WhatsApp';
+                    } else if (this.currentChannel === 'instagram') {
+                        sendBtn.innerHTML = '<i data-feather="instagram"></i> Send Instagram';
+                    } else if (this.currentChannel === 'email') {
+                        sendBtn.innerHTML = '<i data-feather="mail"></i> Send Email';
+                    }
                     feather.replace();
                 }
             };
@@ -2381,6 +2447,8 @@ class NextGenUdaanApp {
             let matchesChannel = true;
             if (this.currentChannel === 'instagram') {
                 matchesChannel = p.instagram && p.instagram.length > 0;
+            } else if (this.currentChannel === 'email') {
+                matchesChannel = p.email && p.email.length > 0;
             }
 
             return matchesSearch && matchesStatus && matchesInterest && matchesChannel;
@@ -2493,6 +2561,11 @@ class NextGenUdaanApp {
             return;
         }
 
+        if (this.currentChannel === 'email') {
+            await this.handleBulkSendEmail();
+            return;
+        }
+
         const template = this.data.whatsappTemplates.find(t => t.id === this.selectedTemplateId);
         const prospectsToSend = Array.from(this.selectedProspects).map(id =>
             this.data.prospects.find(p => p.id === id)
@@ -2555,6 +2628,31 @@ class NextGenUdaanApp {
             }
 
             // Longer delay for manual action
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+
+    async handleBulkSendEmail() {
+        const template = this.data.whatsappTemplates.find(t => t.id === this.selectedTemplateId);
+        const prospectsToSend = Array.from(this.selectedProspects).map(id =>
+            this.data.prospects.find(p => p.id === id)
+        );
+
+        if (!confirm(`This will open your native mail app for ${prospectsToSend.length} messages. Continue?`)) return;
+
+        for (const p of prospectsToSend) {
+            if (!p.email) continue;
+
+            const message = this.formatMessage(template.content, p);
+            const subject = encodeURIComponent('Follow-up from NextGen Udaan');
+            const body = encodeURIComponent(message);
+            const url = `mailto:${p.email}?subject=${subject}&body=${body}`;
+
+            window.open(url, '_self');
+
+            await this.logActivity('Email Sent', `Sent to ${p.name} (${p.email})`);
+
+            // Wait a bit longer between mailto calls to avoid flooding
             await new Promise(r => setTimeout(r, 2000));
         }
     }
