@@ -248,7 +248,11 @@
                         <h2 style="margin: 0;">Prospects List</h2>
                     </div>
                     <div class="search-filters">
-                        <input type="text" id="prospect-search" class="form-control" placeholder="Search prospects...">
+                         <input type="text" id="prospect-search" class="form-control" placeholder="Search prospects...">
+                        <select id="team-filter" class="form-control">
+                            <option value="">All Teams</option>
+                            <!-- Populated by JS -->
+                        </select>
                         <select id="status-filter" class="form-control">
                             <option value="">All Status</option>
                             <option value="new">New</option>
@@ -397,6 +401,14 @@
                                             <input type="date" name="followUpDate" class="form-control">
                                         </div>
                                     </div>
+                                    <input type="hidden" name="lead-source-val">
+                                </div>
+                                <div class="form-group" id="admin-team-assignment" style="display: none;">
+                                    <label class="form-label">Assign to Team</label>
+                                    <select name="teamId" id="add-prospect-team" class="form-control">
+                                        <option value="">Unassigned</option>
+                                        <!-- Options populated by JS -->
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Assign to Team Member</label>
@@ -511,14 +523,7 @@
                                 </div>
                                 <i data-feather="download" class="download-icon"></i>
                             </div>
-                            <div class="report-item" onclick="app.generateReport('activities')">
-                                <i data-feather="activity" class="report-icon"></i>
-                                <div class="report-info">
-                                    <h4>Activity Log</h4>
-                                    <p>Recent system activities and updates</p>
-                                </div>
-                                <i data-feather="download" class="download-icon"></i>
-                            </div>
+
                         </div>
                     </div>
 

@@ -6,7 +6,6 @@ class NextGenUdaanApp {
         this.data = {
             users: [],
             prospects: [],
-            activities: [],
             leaderboard: [],
             leads: [],
             employees: [],
@@ -94,21 +93,15 @@ class NextGenUdaanApp {
 
         // View toggles removed
 
-        // Search Prospects
-        const searchInput = document.getElementById('prospect-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterProspects(e.target.value);
-            });
-        }
-
-        // Status Filter Dropdown
-        const statusFilter = document.getElementById('status-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', (e) => {
-                this.filterProspectsByStatus(e.target.value);
-            });
-        }
+        // Search & Filter Prospects
+        ['prospect-search', 'status-filter', 'team-filter'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+                    this.applyProspectFilters();
+                });
+            }
+        });
 
         // Forms
         document.addEventListener('submit', (e) => {
@@ -285,11 +278,6 @@ class NextGenUdaanApp {
                 if (this.currentPage === 'dashboard') this.updateMetrics();
             });
 
-        // Listen for activities
-        this.db.collection('activities').orderBy('timestamp', 'desc').limit(20)
-            .onSnapshot(snapshot => {
-                this.data.activities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            });
 
         // Listen for users
         this.db.collection('users').onSnapshot(snapshot => {
@@ -1037,7 +1025,20 @@ class NextGenUdaanApp {
         if (teamHeader) {
             teamHeader.style.display = this.isAdmin() ? 'table-cell' : 'none';
         }
-        this.renderProspectsTable();
+
+        // Populate team filter
+        const teamFilter = document.getElementById('team-filter');
+        if (teamFilter) {
+            teamFilter.innerHTML = '<option value="">All Teams</option>';
+            this.data.teams.forEach(team => {
+                const opt = document.createElement('option');
+                opt.value = team.id;
+                opt.textContent = team.name;
+                teamFilter.appendChild(opt);
+            });
+        }
+
+        this.applyProspectFilters();
     }
 
     renderProspectsTable(prospectsToRender = null) {
@@ -1145,24 +1146,29 @@ class NextGenUdaanApp {
             });
     }
 
-    filterProspects(searchTerm) {
-        const term = searchTerm.toLowerCase().trim();
+    applyProspectFilters() {
+        const searchTerm = document.getElementById('prospect-search')?.value.toLowerCase().trim() || '';
+        const statusFilter = document.getElementById('status-filter')?.value || '';
+        const teamFilter = document.getElementById('team-filter')?.value || '';
+
         const accessibleProspects = this.getAccessibleProspects();
-        const filtered = accessibleProspects.filter(p =>
-            p.name.toLowerCase().includes(term) ||
-            p.phone.includes(term) ||
-            (p.email && p.email.toLowerCase().includes(term))
-        );
+
+        const filtered = accessibleProspects.filter(p => {
+            const matchesSearch = !searchTerm || 
+                (p.name || '').toLowerCase().includes(searchTerm) ||
+                (p.phone || '').includes(searchTerm) ||
+                (p.email || '').toLowerCase().includes(searchTerm);
+            
+            const matchesStatus = !statusFilter || p.status === statusFilter;
+            const matchesTeam = !teamFilter || p.teamId === teamFilter;
+
+            return matchesSearch && matchesStatus && matchesTeam;
+        });
+
         this.renderProspectsTable(filtered);
     }
 
-    filterProspectsByStatus(status) {
-        const accessibleProspects = this.getAccessibleProspects();
-        const filtered = (!status || status === 'all')
-            ? accessibleProspects
-            : accessibleProspects.filter(p => p.status === status);
-        this.renderProspectsTable(filtered);
-    }
+    // filterProspectsByStatus removed in favor of applyProspectFilters
 
     async loadAddProspectForm() {
         const assignInput = document.getElementById('assign-to-input');
@@ -1217,6 +1223,24 @@ class NextGenUdaanApp {
 
             // Store for form submission
             assignInput.dataset.employeeMap = JSON.stringify(employeeMap);
+
+            // Populate Team Select for Admins
+            const adminTeamSection = document.getElementById('admin-team-assignment');
+            const teamSelect = document.getElementById('add-prospect-team');
+            if (adminTeamSection && teamSelect) {
+                const isAdmin = this.isAdmin();
+                adminTeamSection.style.display = isAdmin ? 'block' : 'none';
+                
+                if (isAdmin) {
+                    teamSelect.innerHTML = '<option value="">Unassigned</option>';
+                    this.data.teams.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        teamSelect.appendChild(opt);
+                    });
+                }
+            }
 
         } catch (error) {
             console.error('Error loading employees:', error);
@@ -1594,13 +1618,6 @@ class NextGenUdaanApp {
                 // 2. Delete Lead
                 await this.db.collection('joinRequests').doc(id).delete();
 
-                // 3. Log Activity
-                await this.db.collection('activities').add({
-                    userId: this.currentUser.id,
-                    action: 'Lead Transferred',
-                    details: `${lead.name} promoted to Prospect.`,
-                    timestamp: new Date().toISOString()
-                });
 
                 this.showSuccess(`${lead.name} transferred successfully!`);
             } catch (error) {
@@ -2095,7 +2112,7 @@ class NextGenUdaanApp {
                 assignedTo: formData.get('assignedTo') || (this.isAdmin() ? '' : userId),
                 status: 'new',
                 // Team ownership fields
-                teamId: this.isAdmin() ? '' : userTeamId, // Team leaders/members auto-assign to their team
+                teamId: this.isAdmin() ? (formData.get('teamId') || '') : userTeamId, // Team leaders/members auto-assign to their team
                 ownerId: userId, // Track who created this prospect
                 createdBy: userId, // Track original creator
                 createdAt: new Date().toISOString(),
@@ -2103,15 +2120,11 @@ class NextGenUdaanApp {
                 notes: formData.get('notes')
             };
 
+
+
             this.showLoading();
             this.db.collection('prospects').add(newProspect)
                 .then(() => {
-                    this.db.collection('activities').add({
-                        userId: this.currentUser.id,
-                        action: 'Prospect Added',
-                        details: `Added ${newProspect.name} from ${newProspect.leadSource} `,
-                        timestamp: new Date().toISOString()
-                    });
                     this.showSuccess('Prospect added successfully!');
                     this.clearProspectForm();
                     this.hideLoading();
@@ -2121,6 +2134,7 @@ class NextGenUdaanApp {
                     this.showError('Error adding prospect. Please try again.');
                     this.hideLoading();
                 });
+
 
         } catch (error) {
             console.error('Error adding prospect:', error);
@@ -2241,29 +2255,6 @@ class NextGenUdaanApp {
                         ],
                         'raw_leads_report'
                     );
-                    break;
-                case 'activities':
-                    this.showLoading();
-                    this.db.collection('activities').orderBy('timestamp', 'desc').get()
-                        .then(snapshot => {
-                            const allActivities = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                            this.exportToCSV(
-                                allActivities,
-                                ['User', 'Details', 'Timestamp'],
-                                row => [
-                                    this.getAssignedName(row.userId),
-                                    row.details,
-                                    this.formatDate(row.timestamp?.toDate ? row.timestamp.toDate() : row.timestamp)
-                                ],
-                                'activity_log_report'
-                            );
-                            this.hideLoading();
-                        })
-                        .catch(err => {
-                            console.error('Activity report error:', err);
-                            this.showError('Failed to fetch activities');
-                            this.hideLoading();
-                        });
                     break;
                 case 'employee_performance':
                     const performanceData = (this.data.employees || []).map(emp => {
@@ -2562,7 +2553,7 @@ class NextGenUdaanApp {
         if (confirmation === 'DELETE EVERYTHING') {
             this.showLoading();
             try {
-                const collections = ['prospects', 'joinRequests', 'activities'];
+                const collections = ['prospects', 'joinRequests'];
                 for (const col of collections) {
                     const snapshot = await this.db.collection(col).get();
                     if (snapshot.empty) continue;
@@ -3211,6 +3202,10 @@ class NextGenUdaanApp {
                         <span class="value">${memberCount}</span>
                         <span class="label">Members</span>
                     </div>
+                    <div class="stat">
+                        <span class="value">${this.data.prospects.filter(p => p.teamId === team.id).length}</span>
+                        <span class="label">Prospects</span>
+                    </div>
                 </div>
                 <div class="team-members-preview">
                     ${this.renderTeamMembersPreview(team.members)}
@@ -3497,18 +3492,7 @@ class NextGenUdaanApp {
         }
     }
 
-    async logActivity(action, details) {
-        try {
-            await this.db.collection('activities').add({
-                userId: this.currentUser.id,
-                action: action,
-                details: details,
-                timestamp: new Date().toISOString()
-            });
-        } catch (err) {
-            console.error('Error logging activity:', err);
-        }
-    }
+
     // NOTE: setupRoleBasedAccess is defined earlier in the file (around line 429)
 }
 
