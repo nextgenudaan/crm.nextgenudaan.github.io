@@ -186,7 +186,8 @@ class NextGenUdaanApp {
                         employeeId: authData.employeeId,
                         role: authData.role || 'member',
                         status: 'active',
-                        permissions: authData.permissions
+                        permissions: authData.permissions,
+                        teamId: authData.teamId || null 
                     };
                     this.setupRealtimeData();
                     this.showApp();
@@ -255,7 +256,8 @@ class NextGenUdaanApp {
         return {
             employeeId: empId,
             role: finalAccessData.role,
-            permissions: roleData.permissions || { crm: {} }
+            permissions: roleData.permissions || { crm: {} },
+            teamId: finalAccessData.teamId
         };
     }
 
@@ -271,12 +273,53 @@ class NextGenUdaanApp {
             });
 
         // Listen for prospects
-        this.db.collection('prospects').orderBy('createdAt', 'desc')
-            .onSnapshot(snapshot => {
-                this.data.prospects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Listen for prospects based on ROLE
+        if (this.currentUser.role === 'Admin') {
+            // Admin sees ALL
+            this.db.collection('prospects').orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    this.data.prospects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.loadPageContent(this.currentPage);
+                    if (this.currentPage === 'dashboard') this.updateMetrics();
+                });
+
+        } else if (this.currentUser.role === 'Team Leader') {
+            // Team Leader sees TEAM prospects
+            // Note: If teamId is null, they might see nothing or unassigned. safely handle null.
+            if (this.currentUser.teamId) {
+                this.db.collection('prospects')
+                    .where('teamId', '==', this.currentUser.teamId)
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot(snapshot => {
+                        this.data.prospects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        this.loadPageContent(this.currentPage);
+                        if (this.currentPage === 'dashboard') this.updateMetrics();
+                    });
+            } else {
+                this.data.prospects = []; // No team assigned
                 this.loadPageContent(this.currentPage);
-                if (this.currentPage === 'dashboard') this.updateMetrics();
-            });
+            }
+
+        } else {
+            // Member: Sees Assigned To Me OR Created By Me
+            this.memberProspects = { assigned: [], created: [] };
+
+            // Listener 1: Assigned To Me
+            this.db.collection('prospects')
+                .where('assigneeId', '==', this.currentUser.id)
+                .onSnapshot(snapshot => {
+                    this.memberProspects.assigned = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.mergeProspects();
+                });
+
+            // Listener 2: Created By Me
+            this.db.collection('prospects')
+                .where('creatorId', '==', this.currentUser.id)
+                .onSnapshot(snapshot => {
+                    this.memberProspects.created = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.mergeProspects();
+                });
+        }
 
 
         // Listen for users
@@ -368,6 +411,22 @@ class NextGenUdaanApp {
         }
     }
 
+    mergeProspects() {
+        // Merge assigned and created, remove duplicates by ID
+        const all = [...(this.memberProspects.assigned || []), ...(this.memberProspects.created || [])];
+        const unique = Array.from(new Map(all.map(item => [item.id, item])).values());
+        
+        // Sort by createdAt desc
+        this.data.prospects = unique.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            return dateB - dateA;
+        });
+
+        this.loadPageContent(this.currentPage);
+        if (this.currentPage === 'dashboard') this.updateMetrics();
+    }
+
     handleLogin(e) {
         try {
             const emailInput = document.getElementById('email');
@@ -378,7 +437,7 @@ class NextGenUdaanApp {
                 return;
             }
 
-            const email = emailInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
             const password = passwordInput.value.trim();
 
             if (!email || !password) {
@@ -398,7 +457,19 @@ class NextGenUdaanApp {
                 })
                 .catch((error) => {
                     console.error('Firebase login error:', error.code, error.message);
-                    this.showError(error.message);
+                    
+                    let friendlyMessage = error.message;
+                    if (error.code === 'auth/wrong-password') {
+                        friendlyMessage = "Incorrect password. Please check and try again.";
+                    } else if (error.code === 'auth/user-not-found') {
+                        friendlyMessage = "No account found with this email.";
+                    } else if (error.code === 'auth/too-many-requests') {
+                        friendlyMessage = "Too many failed attempts. Please try again later or reset your password.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        friendlyMessage = "Invalid email format.";
+                    }
+                    
+                    this.showError(friendlyMessage);
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText;
                 });
@@ -751,11 +822,63 @@ class NextGenUdaanApp {
     loadDashboard() {
         this.updateMetrics();
 
+        // Load Unassigned Queue for Team Leaders
+        if (this.isTeamLeader()) {
+            this.loadUnassignedQueue();
+        }
+
         // Delay chart rendering to ensure DOM is ready
         setTimeout(() => {
             this.renderCharts();
         }, 300);
     }
+
+    loadUnassignedQueue() {
+        const queueSection = document.getElementById('unassigned-queue-section');
+        const tbody = document.getElementById('unassigned-queue-tbody');
+        const countBadge = document.getElementById('unassigned-count');
+
+        if (!queueSection || !tbody) return;
+
+        const myTeamId = this.currentUser.teamId;
+        if (!myTeamId) {
+            queueSection.classList.add('hidden');
+            return;
+        }
+
+        // Query: Prospects in my team with NO AssignedTo
+        // Note: Firestore doesn't support '==' null or empty string easily mixed with other filters sometimes.
+        // We will filter client side from the listener data if possible, or run a query.
+        // efficient: Since we already load team prospects in setupRealtimeData, we can filter `this.data.prospects`.
+        
+        const unassigned = this.data.prospects.filter(p => !p.assignedTo); // Assuming filtered by TeamID already
+        
+        if (unassigned.length === 0) {
+            queueSection.classList.add('hidden');
+            return;
+        }
+
+        queueSection.classList.remove('hidden');
+        if (countBadge) countBadge.textContent = `${unassigned.length} Pending`;
+
+        tbody.innerHTML = unassigned.map(p => `
+            <tr>
+                <td>${p.name}</td>
+                <td>${p.phone}</td>
+                <td><span class="badge">${p.leadSource}</span></td>
+                <td>${this.getAssignedName(p.creatorId) || 'System'}</td>
+                <td>${this.formatDate(p.createdAt)}</td>
+                <td>
+                    <button class="btn btn--primary btn--sm" onclick="app.showAssignMemberModal('${p.id}')">
+                        Assign
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+        this.initializeFeatherIcons();
+    }
+
 
     updateMetrics() {
         const totalProspects = this.data.prospects.length;
@@ -1181,36 +1304,51 @@ class NextGenUdaanApp {
         assignInput.disabled = true;
 
         try {
-            // Fetch active employees from HRMS
-            const employeesSnapshot = await this.db.collection('employees')
-                .where('status', '==', 'Active')
-                .get();
+            // Fetch active users from cached data (maintained by Access app logic link)
+            let eligibleUsers = this.data.users || [];
+
+            // Filter for Team Leaders: Only show my team members
+            if (this.isTeamLeader() && this.currentUser.teamId) {
+                eligibleUsers = eligibleUsers.filter(u => u.teamId === this.currentUser.teamId);
+            }
+            
+            // Only active users
+            eligibleUsers = eligibleUsers.filter(u => u.status === 'active' || !u.status); // Default to active if status undefined
 
             assignInput.value = '';
             assignInput.disabled = false;
-            assignInput.placeholder = 'Search by name or ID...';
+            assignInput.placeholder = 'Search by name...';
             assignList.innerHTML = '';
 
-            if (employeesSnapshot.empty) {
-                assignInput.placeholder = 'No active employees found';
+            if (eligibleUsers.length === 0) {
+                assignInput.placeholder = 'No eligible team members found';
                 assignInput.disabled = true;
                 return;
             }
 
-            // Store employee data for lookup
-            const employeeMap = {};
+            // Store user data for lookup
+            const userMap = {};
 
-            employeesSnapshot.docs.forEach(doc => {
-                const employee = doc.data();
-                const displayCode = employee.empCode ? ` (${employee.empCode})` : '';
-                const displayText = `${employee.fullName}${displayCode} `;
-
-                employeeMap[displayText] = doc.id;
+            eligibleUsers.forEach(user => {
+                const displayText = `${user.name} (${user.role})`;
+                userMap[displayText] = user.id;
 
                 const option = document.createElement('option');
                 option.value = displayText;
                 assignList.appendChild(option);
             });
+            
+            // Handle selection
+            assignInput.addEventListener('input', function () {
+                if (userMap[this.value]) {
+                    assignValue.value = userMap[this.value];
+                } else {
+                    assignValue.value = '';
+                }
+            });
+
+            // Store for form submission
+            assignInput.dataset.employeeMap = JSON.stringify(userMap);
 
             // Handle selection
             assignInput.addEventListener('input', function () {
@@ -1960,59 +2098,61 @@ class NextGenUdaanApp {
         assignInput.value = 'Loading employees...';
         assignInput.disabled = true;
 
-        try {
-            const employeesSnapshot = await this.db.collection('employees')
-                .where('status', '==', 'Active')
-                .get();
-
             assignInput.disabled = false;
-            assignInput.placeholder = 'Search by name or ID...';
+            assignInput.placeholder = 'Search by name...';
             assignList.innerHTML = '';
 
-            if (!employeesSnapshot.empty) {
-                const employeeMap = {};
+            // Use cached users and filter by Team
+            let eligibleUsers = this.data.users || [];
+            if (this.isTeamLeader() && this.currentUser.teamId) {
+                eligibleUsers = eligibleUsers.filter(u => u.teamId === this.currentUser.teamId);
+            }
+           eligibleUsers = eligibleUsers.filter(u => u.status === 'active' || !u.status);
+
+            if (eligibleUsers.length > 0) {
+                const userMap = {};
                 let currentAssignedText = '';
 
-                employeesSnapshot.docs.forEach(doc => {
-                    const employee = doc.data();
-                    const displayCode = employee.empCode ? ` (${employee.empCode})` : '';
-                    const displayText = `${employee.fullName}${displayCode} `;
-
-                    employeeMap[displayText] = doc.id;
+                eligibleUsers.forEach(user => {
+                    const displayText = `${user.name} (${user.role})`;
+                    userMap[displayText] = user.id;
 
                     const option = document.createElement('option');
                     option.value = displayText;
                     assignList.appendChild(option);
 
-                    // Find currently assigned employee
-                    if (doc.id === prospect.assignedTo) {
+                    // Find currently assigned user
+                    if (user.id === prospect.assignedTo) {
                         currentAssignedText = displayText;
                     }
                 });
 
                 // Set current assignment
+                // If the assigned user is not in the list (e.g. from another team and I am TL), we might want to show them anyway or show ID.
+                // But typically TL only sees their team. If assigned to someone else, it shouldn't happen for 'team' access prospect.
+                // If it does, show generic or empty.
                 assignInput.value = currentAssignedText;
+                if (!currentAssignedText && prospect.assignedTo) {
+                     // Fallback for cross-team viewing if allowed (e.g. Admin view)
+                     assignInput.value = this.getAssignedName(prospect.assignedTo);
+                }
+                
                 assignValue.value = prospect.assignedTo || '';
 
                 // Handle selection
                 assignInput.addEventListener('input', function () {
-                    if (employeeMap[this.value]) {
-                        assignValue.value = employeeMap[this.value];
+                    if (userMap[this.value]) {
+                        assignValue.value = userMap[this.value];
                     } else {
                         assignValue.value = '';
                     }
                 });
 
-                assignInput.dataset.employeeMap = JSON.stringify(employeeMap);
+                assignInput.dataset.employeeMap = JSON.stringify(userMap);
             } else {
-                assignInput.placeholder = 'No active employees found';
+                assignInput.placeholder = 'No eligible team members found';
                 assignInput.disabled = true;
             }
-        } catch (error) {
-            console.error('Error loading employees:', error);
-            assignInput.placeholder = 'Error loading employees';
-            assignInput.disabled = true;
-        }
 
         // Populate form fields
         form.querySelector('[name="prospect-id"]').value = prospect.id;
@@ -2095,8 +2235,9 @@ class NextGenUdaanApp {
             const formData = new FormData(e.target);
             
             // Determine team and ownership based on user role
-            const userTeamId = this.getUserTeam();
+            const userTeamId = this.currentUser.teamId; // Use authenticated teamId
             const userId = this.currentUser?.employeeId;
+            const isAdmin = this.isAdmin();
 
             const newProspect = {
                 name: formData.get('name'),
@@ -2109,12 +2250,13 @@ class NextGenUdaanApp {
                 leadSource: formData.get('leadSource'),
                 location: formData.get('location'),
                 followUpDate: formData.get('followUpDate'),
-                assignedTo: formData.get('assignedTo') || (this.isAdmin() ? '' : userId),
+                assignedTo: formData.get('assignedTo') || (isAdmin ? '' : userId),
                 status: 'new',
                 // Team ownership fields
-                teamId: this.isAdmin() ? (formData.get('teamId') || '') : userTeamId, // Team leaders/members auto-assign to their team
-                ownerId: userId, // Track who created this prospect
-                createdBy: userId, // Track original creator
+                teamId: isAdmin ? (formData.get('teamId') || '') : userTeamId,
+                ownerId: userId, 
+                creatorId: userId, // Track original creator
+                creationSource: isAdmin ? 'Admin Assigned' : 'Organic', // Tag source
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 notes: formData.get('notes')
@@ -2539,6 +2681,155 @@ class NextGenUdaanApp {
             reader.readAsText(file);
         };
         input.click();
+    }
+
+    // --- Teams Management ---
+
+    loadTeams() {
+        // If Admin, show Create Button
+        const createBtn = document.getElementById('create-team-btn');
+        if (createBtn) createBtn.style.display = this.isAdmin() ? 'flex' : 'none';
+
+        if (this.isAdmin()) {
+            this.renderTeams(this.data.teams);
+        } else if (this.isTeamLeader()) {
+            // TL sees only their team
+            const myTeam = this.data.teams.filter(t => t.id === this.currentUser.teamId);
+            this.renderTeams(myTeam);
+        } else {
+            // Member sees nothing or their team info? Requirements said "Teams: No Access" for Member.
+            this.renderAccessDenied('teams-page', false);
+        }
+    }
+
+    renderTeams(teams) {
+        const grid = document.getElementById('teams-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        if (teams.length === 0) {
+            grid.innerHTML = this.getEmptyState('No teams found.');
+            return;
+        }
+
+        teams.forEach(team => {
+            const card = document.createElement('div');
+            card.className = 'team-card'; 
+            // We need to style this card or use existing classes. I will use 'metric-card' style layout or custom.
+            // Let's assume some basic CSS or inline styles if needed, or reuse 'template-card'.
+            card.className = 'template-card'; // Reuse template card for grid layout
+            
+            // Get Member Count from users data
+            // Note: Users data might only be full if Admin.
+            const members = this.data.users.filter(u => u.teamId === team.id);
+            const leader = this.data.users.find(u => u.id === team.leaderId);
+
+            card.innerHTML = `
+                <div class="template-card-header">
+                    <h4>${team.name}</h4>
+                    <span class="badge badge--primary">${members.length} Members</span>
+                </div>
+                <div class="team-details" style="margin: 1rem 0; color: var(--text-secondary);">
+                    <p><strong>Leader:</strong> ${leader ? leader.name : 'Unassigned'}</p>
+                    <p><strong>Performance:</strong> -</p>
+                </div>
+                <div class="template-actions">
+                     ${this.isAdmin() ? `
+                    <button class="btn btn--secondary btn--sm" onclick="app.editTeam('${team.id}')">
+                        <i data-feather="edit"></i> Manage
+                    </button>
+                    <button class="btn btn--error btn--sm" onclick="app.deleteTeam('${team.id}')">
+                        <i data-feather="trash-2"></i>
+                    </button>
+                    ` : ''}
+                     ${this.isTeamLeader() ? `
+                    <button class="btn btn--secondary btn--sm" onclick="app.viewTeamMembers('${team.id}')">
+                         <i data-feather="users"></i> View Members
+                    </button>
+                    ` : ''}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        this.initializeFeatherIcons();
+    }
+
+    async createTeam() {
+        const name = prompt("Enter Team Name:");
+        if (!name) return;
+
+        this.showLoading();
+        try {
+            await this.db.collection('teams').add({
+                name: name,
+                leaderId: null,
+                createdAt: new Date().toISOString()
+            });
+            this.showSuccess('Team created!');
+        } catch (e) {
+            console.error(e);
+            this.showError('Failed to create team');
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    async deleteTeam(id) {
+        if(!confirm("Delete this team?")) return;
+        this.showLoading();
+        try {
+            await this.db.collection('teams').doc(id).delete();
+            this.showSuccess('Team deleted!');
+        } catch(e) { console.error(e); this.showError('Failed to delete'); }
+        finally { this.hideLoading(); }
+    }
+
+    async editTeam(id) {
+        const team = this.data.teams.find(t => t.id === id);
+        if (!team) return;
+
+        const newName = prompt("Enter new Team Name:", team.name);
+        if (newName && newName !== team.name) {
+            this.showLoading();
+            try {
+                await this.db.collection('teams').doc(id).update({ 
+                    name: newName,
+                    updatedAt: new Date().toISOString()
+                });
+                this.showSuccess('Team updated!');
+            } catch(e) { 
+                console.error(e); 
+                this.showError('Update failed'); 
+            } finally { 
+                this.hideLoading(); 
+            }
+        }
+    }
+
+    viewTeamMembers(teamId) {
+        // Simple alert for now, effectively "View Members" logic
+        // Ideally checking Access/Users list filtered by Team.
+        // Since CRM has users data (loaded in setupRealtimeData), we can show a list.
+        const members = this.data.users.filter(u => u.teamId === teamId);
+        if (members.length === 0) {
+            alert('No members in this team.');
+            return;
+        }
+        const names = members.map(m => `- ${m.name} (${m.role})`).join('\n');
+        alert(`Team Members:\n${names}`);
+    }
+
+    // Modal for assigning member (reusing a simple prompt or generic modal for now to save complexity)
+    showAssignMemberModal(prospectId) {
+        // Find prospects
+        const p = this.data.prospects.find(x => x.id === prospectId);
+        if(!p) return;
+
+        // Populate and show edit modal, focused on assignment
+        this.editProspect(prospectId);
+        // Optimally we'd have a specific small modal, but editProspect works if we just want to assign.
+        // User asked for "Unassigned Queue... to action". "Action" implies assigning.
     }
 
     async clearAllData() {
@@ -3410,9 +3701,31 @@ class NextGenUdaanApp {
         }
     }
 
+    async logActivity(action, details) {
+        try {
+            const logEntry = {
+                action,
+                details,
+                performedBy: this.currentUser?.id || 'System',
+                timestamp: new Date().toISOString()
+            };
+            // Log to Firestore if collection exists, otherwise just console
+            // We'll assume an 'activities' collection is desirable for a CRM
+            await this.db.collection('activities').add(logEntry);
+            console.log(`[Activity Log] ${action}: ${details}`);
+        } catch (error) {
+            console.warn('Failed to log activity:', error);
+        }
+    }
+
     async handleAssignToTeam(e) {
         e.preventDefault();
         
+        if (!this.isAdmin()) {
+            this.showError('Permission Denied: Only Admins can assign prospects to teams.');
+            return;
+        }
+
         const prospectId = document.getElementById('assign-prospect-id').value;
         const teamId = document.getElementById('assign-team-select').value;
         const memberId = document.getElementById('assign-member-select').value;

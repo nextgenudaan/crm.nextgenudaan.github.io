@@ -238,6 +238,32 @@
                     </div>
                 </div>
 
+                <div id="unassigned-queue-section" class="hidden" style="margin-top: 2rem; background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i data-feather="inbox" style="color: var(--color-warning);"></i>
+                            Unassigned Team Prospects
+                        </h3>
+                        <span class="badge badge--warning" id="unassigned-count">0 Pending</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="prospects-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Source</th>
+                                    <th>Created By</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unassigned-queue-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
             </div>
 
