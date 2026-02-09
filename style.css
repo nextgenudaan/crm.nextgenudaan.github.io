@@ -1333,10 +1333,10 @@ select.form-control {
 /* Sidebar Styles */
 .sidebar {
   grid-area: sidebar;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: var(--color-slate-900);
   padding: 0;
   overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-logo {
@@ -1344,13 +1344,15 @@ select.form-control {
   display: flex;
   align-items: center;
   padding: 0 var(--space-24);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-logo h3 {
   margin: 0;
-  color: var(--color-primary);
-  font-size: var(--font-size-2xl);
+  color: var(--color-white);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .sidebar-nav {
@@ -1362,7 +1364,7 @@ select.form-control {
   align-items: center;
   gap: var(--space-12);
   padding: var(--space-12) var(--space-16);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   border-radius: var(--radius-base);
   margin-bottom: var(--space-4);
@@ -1371,8 +1373,8 @@ select.form-control {
 }
 
 .nav-item:hover {
-  background: var(--color-secondary);
-  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
 }
 
 .nav-item.active {
@@ -3860,40 +3862,38 @@ select.form-control {
 [data-color-scheme="dark"] .channel-btn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
- / *   A c c e s s   D e n i e d   S c r e e n   * / 
- . a c c e s s - d e n i e d - w r a p p e r   { 
-         d i s p l a y :   f l e x ; 
-         f l e x - d i r e c t i o n :   c o l u m n ; 
-         a l i g n - i t e m s :   c e n t e r ; 
-         j u s t i f y - c o n t e n t :   c e n t e r ; 
-         h e i g h t :   1 0 0 % ; 
-         w i d t h :   1 0 0 % ; 
-         m i n - h e i g h t :   4 0 0 p x ; 
-         p a d d i n g :   v a r ( - - s p a c e - 3 2 ) ; 
-         t e x t - a l i g n :   c e n t e r ; 
-         b a c k g r o u n d - c o l o r :   v a r ( - - c o l o r - b a c k g r o u n d ) ; 
-         c o l o r :   v a r ( - - c o l o r - t e x t ) ; 
- } 
- 
- . a c c e s s - d e n i e d - i c o n   { 
-         w i d t h :   8 0 p x ; 
-         h e i g h t :   8 0 p x ; 
-         m a r g i n - b o t t o m :   v a r ( - - s p a c e - 2 4 ) ; 
-         c o l o r :   v a r ( - - c o l o r - e r r o r ) ; 
-         o p a c i t y :   0 . 8 ; 
- } 
- 
- . a c c e s s - d e n i e d - t i t l e   { 
-         f o n t - s i z e :   v a r ( - - f o n t - s i z e - 3 x l ) ; 
-         m a r g i n - b o t t o m :   v a r ( - - s p a c e - 8 ) ; 
- } 
- 
- . a c c e s s - d e n i e d - m e s s a g e   { 
-         f o n t - s i z e :   v a r ( - - f o n t - s i z e - l g ) ; 
-         c o l o r :   v a r ( - - c o l o r - t e x t - s e c o n d a r y ) ; 
-         m a x - w i d t h :   5 0 0 p x ; 
-         m a r g i n - b o t t o m :   v a r ( - - s p a c e - 3 2 ) ; 
- } 
- 
- 
- 
+
+/* Access Denied Screen */
+.access-denied-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  min-height: 400px;
+  padding: var(--space-32);
+  text-align: center;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.access-denied-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: var(--space-24);
+  color: var(--color-error);
+  opacity: 0.8;
+}
+
+.access-denied-title {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-8);
+}
+
+.access-denied-message {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  max-width: 500px;
+  margin-bottom: var(--space-32);
+}

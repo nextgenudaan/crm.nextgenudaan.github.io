@@ -1,0 +1,63 @@
+<!-- Team Dashboard Page -->
+<div id="team-dashboard-page" class="page">
+    <div class="page-header">
+        <div>
+            <h2>My Team Dashboard</h2>
+            <p class="text-muted">Overview of your team's performance and pipeline.</p>
+        </div>
+        <div class="header-actions">
+            <span id="my-team-name-badge" class="badge badge--primary"
+                style="font-size: 1rem; padding: 6px 12px;">NextGen Squad</span>
+        </div>
+    </div>
+
+    <!-- Team Stats -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(33, 128, 141, 0.1); color: var(--color-primary);">
+                <i data-feather="users"></i>
+            </div>
+            <div class="metric-content">
+                <h3><span id="team-total-prospects">0</span></h3>
+                <p>Total Prospects</p>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(234, 179, 8, 0.1); color: #eab308;">
+                <i data-feather="star"></i>
+            </div>
+            <div class="metric-content">
+                <h3><span id="team-avg-conversion">0%</span></h3>
+                <p>Conversion Rate</p>
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-icon" style="background: rgba(147, 51, 234, 0.1); color: #9333ea;">
+                <i data-feather="activity"></i>
+            </div>
+            <div class="metric-content">
+                <h3><span id="team-active-members">0</span></h3>
+                <p>Active Members</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <!-- Team Pipeline -->
+        <div class="leaderboard-section">
+            <h3>Team Pipeline</h3>
+            <div class="pipeline-preview" id="team-pipeline-preview"
+                style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+                <!-- Pipeline columns populated by JS -->
+            </div>
+        </div>
+
+        <!-- Member Workload -->
+        <div class="leaderboard-section">
+            <h3>Member Workload</h3>
+            <div class="leaderboard-list" id="team-member-workload">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+</div>
